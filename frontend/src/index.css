@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@keyframes draw-timer {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 100;
+  }
+}
