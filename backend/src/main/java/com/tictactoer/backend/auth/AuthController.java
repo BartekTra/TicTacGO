@@ -30,6 +30,7 @@ public class AuthController {
 
         PlayerEntity newPlayer = new PlayerEntity(
                 request.username(),
+                request.email(),
                 passwordEncoder.encode(request.password())
         );
         playerRepository.save(newPlayer);

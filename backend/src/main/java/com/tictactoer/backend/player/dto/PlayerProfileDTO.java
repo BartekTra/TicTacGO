@@ -4,17 +4,19 @@ import com.tictactoer.backend.player.PlayerEntity;
 
 public record PlayerProfileDTO(
         String username,
+        String email,
         int gamesPlayed,
         int gamesWon,
-        double winRate
+        int winRate
 ) {
     public static PlayerProfileDTO fromEntity(PlayerEntity entity) {
-        double rate = entity.getGamesPlayed() == 0
-                ? 0.0
-                : Math.round(((double) entity.getGamesWon() / entity.getGamesPlayed()) * 100.0);
+        int rate = entity.getGamesPlayed() == 0
+                ? 0
+                : (int) Math.round((double) entity.getGamesWon() / entity.getGamesPlayed() * 100.0);
 
         return new PlayerProfileDTO(
                 entity.getUsername(),
+                entity.getEmail(),
                 entity.getGamesPlayed(),
                 entity.getGamesWon(),
                 rate
