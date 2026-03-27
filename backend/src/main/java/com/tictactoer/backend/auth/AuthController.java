@@ -28,9 +28,13 @@ public class AuthController {
             throw new IllegalArgumentException("Nazwa użytkownika jest już zajęta!");
         }
 
+        if (playerRepository.existsByEmail(request.email())) {
+            throw new IllegalArgumentException("Email jest już zajęty!");
+        }
+
         PlayerEntity newPlayer = new PlayerEntity(
-                request.username(),
                 request.email(),
+                request.username(),
                 passwordEncoder.encode(request.password())
         );
         playerRepository.save(newPlayer);
@@ -40,7 +44,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthRequest request) {
-        PlayerEntity player = playerRepository.findByUsername(request.username())
+        PlayerEntity player = playerRepository.findByEmail(request.email())
                 .orElseThrow(() -> new IllegalArgumentException("Nieprawidłowy login lub hasło!"));
 
         if (!passwordEncoder.matches(request.password(), player.getPassword())) {
@@ -52,7 +56,7 @@ public class AuthController {
 
     @NonNull
     private ResponseEntity<AuthResponse> getAuthResponseResponseEntity(PlayerEntity player) {
-        String token = jwtService.generateToken(player.getUsername());
+        String token = jwtService.generateToken(player.getEmail());
 
         ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
@@ -64,6 +68,14 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
-                .body(new AuthResponse(player.getUsername()));
+                .body(new AuthResponse(
+                        player.getId(),
+                        player.getEmail(),
+                        player.getUsername(),
+                        player.getGamesPlayed(),
+                        player.getGamesWon(),
+                        player.getWinRate()
+
+                ));
     }
 }

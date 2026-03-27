@@ -17,7 +17,7 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String extractUsername(String token) {
+    public String extractEmail(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(getSignInKey())
                 .build()
@@ -29,16 +29,16 @@ public class JwtService {
 
     public boolean isTokenValid(String token) {
         try {
-            extractUsername(token);
+            extractEmail(token);
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String email) {
         return Jwts.builder()
-                .subject(username)
+                .subject(email)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
                 .signWith(getSignInKey())

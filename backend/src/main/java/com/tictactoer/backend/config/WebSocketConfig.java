@@ -51,8 +51,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                                         String token = cookie.getValue();
 
                                         if (jwtService.isTokenValid(token)) {
-                                            String username = jwtService.extractUsername(token);
-                                            return new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
+                                            String email = jwtService.extractEmail(token);
+                                            return new UsernamePasswordAuthenticationToken(email, null, new ArrayList<>());
                                         }
                                     }
                                 }
