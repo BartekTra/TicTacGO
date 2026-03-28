@@ -1,22 +1,34 @@
 import { LoginForm } from "./loginComponents/LoginForm";
-import { type UserLoginResponse } from "./loginComponents/UserLoginResponse";
 import { setCredentials } from "../../../features/auth/authSlice";
 import { useAppDispatch } from "../../../app/hooks";
 import { useNavigate } from "react-router-dom";
+import api from "../../../api/axios";
+import type { User } from "../../../types/user";
 
 const LoginPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handleTestButton = async (index: number) => {
-    let testIndex = "";
-    switch (index) {
-      case 1:
-        testIndex = "";
-        break;
-      case 2:
-        testIndex = "2";
-        break;
+    let testIndex = index === 2 ? "2" : "";
+
+    try {
+      const { data } = await api.post<User>("/auth/login", {
+        email: `testuje${testIndex}@wp.pl`,
+        password: "12qwaszx",
+      });
+
+      dispatch(setCredentials(data));
+      console.log("Zalogowano:", data);
+      navigate("/");
+    } catch (e: any) {
+      if (e.response && e.response.data) {
+        const serverMessage = e.response.data.message;
+        console.error("Błąd z serwera:", serverMessage);
+        alert(serverMessage);
+      } else {
+        console.error("Błąd połączenia:", e.message);
+      }
     }
   };
 

@@ -12,17 +12,17 @@ public class PlayerService {
     private final PlayerRepository playerRepository;
 
     @Transactional(readOnly = true)
-    public PlayerProfileDTO getProfile(String username) {
-        PlayerEntity player = playerRepository.findByUsername(username)
+    public PlayerProfileDTO getProfile(String email) {
+        PlayerEntity player = playerRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Gracz nie istnieje!"));
 
         return PlayerProfileDTO.fromEntity(player);
     }
 
     @Transactional
-    public void updateStatsAfterGame(String username, boolean isWinner) {
-        PlayerEntity player = playerRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Nie można zaktualizować statystyk. Gracz " + username + " nie istnieje!"));
+    public void updateStatsAfterGame(String email, boolean isWinner) {
+        PlayerEntity player = playerRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Nie można zaktualizować statystyk. Gracz " + email + " nie istnieje!"));
 
         if (isWinner) {
             player.recordWin();

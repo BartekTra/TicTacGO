@@ -31,9 +31,10 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const fetchCurrentUser = async () => {
     setLoading(true);
     try {
-      const response = await api.get<User>("/players/me");
-      setUser(response.data);
-      console.log(response.data);
+      const { data } = await api.get<User>("/players/me");
+      setUser(data);
+      console.log(data);
+      navigate("/");
     } catch (error) {
       console.error("Error fetching user:", error);
       setUser(null);
