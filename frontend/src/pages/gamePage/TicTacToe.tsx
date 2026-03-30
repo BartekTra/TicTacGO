@@ -1,111 +1,85 @@
-import React, { useEffect, useState } from 'react';
-import { Client } from '@stomp/stompjs';
+import React from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useUser } from "../../context/UserContext";
+import { useTicTacToeSocket, type GameData } from "./GameComponents/hooks/useGameWebSocket";
 
-interface TicTacToeGameProps {
-    gameId: string;
-    currentUser: string;
-}
+const TicTacToeGame: React.FC = () => {
+  const { gameId } = useParams<string>();
+  if (!gameId) return <p>XD</p>
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useUser();
 
-interface GameData {
-    board: (string | null)[];
-    currentTurn: string;
-    status: string;
-}
+  const { gameData, sendMove } = useTicTacToeSocket(
+    gameId,
+    user?.email,
+    location.state?.initialGameData as GameData | null,
+  );
 
-const TicTacToeGame: React.FC<TicTacToeGameProps> = ({ gameId, currentUser }) => {
-    const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
-    const [currentTurn, setCurrentTurn] = useState<string>("X");
-    const [status, setStatus] = useState<string>("WAITING_FOR_OPPONENT");
-    const [stompClient, setStompClient] = useState<Client | null>(null);
+  const mySymbol = gameData?.playerX === user?.email ? "X" : "O";
+  const isMyTurn =
+    gameData?.currentTurn === mySymbol && gameData?.status === "IN_PROGRESS";
 
-    const isMyTurn = currentTurn === currentUser;
+  const handleCellClick = (index: number) => {
+    if (!isMyTurn || !gameData || gameData.board[index] !== null || !gameId) return;
+    sendMove(gameId, index);
+  };
 
-    useEffect(() => {
-        const client = new Client({
-            brokerURL: 'ws://localhost:8080/ws-game',
-            
-            debug: function (str: string) {
-                console.log('STOMP: ' + str);
-            },
-            
-            onConnect: () => {
-                console.log('Połączono z serwerem gry!');
-
-                client.subscribe(`/topic/game.${gameId}`, (message) => {
-                    const gameData: GameData = JSON.parse(message.body);
-                    setBoard(gameData.board);
-                    setCurrentTurn(gameData.currentTurn);
-                    setStatus(gameData.status);
-                    
-                    if (gameData.status === 'FINISHED') {
-                        alert("Gra zakończona!");
-                    }
-                });
-
-                client.subscribe('/user/queue/errors', (message) => {
-                    alert("Niedozwolony ruch: " + message.body);
-                });
-            },
-            
-            onStompError: (frame) => {
-                console.error('Błąd STOMP: ', frame.headers['message']);
-            }
-        });
-
-        client.activate();
-        setStompClient(client);
-
-        return () => {
-            if (client.active) {
-                client.deactivate();
-                console.log('Rozłączono z serwerem gry');
-            }
-        };
-    }, [gameId]);
-
-    const handleCellClick = (index: number) => {
-        if (!isMyTurn || board[index] !== null || status !== 'IN_PROGRESS') {
-            return; 
-        }
-
-        if (stompClient && stompClient.connected) {
-            stompClient.publish({
-                destination: '/app/game.move',
-                body: JSON.stringify({
-                    gameId,
-                    position: index
-                })
-            });
-        }
-    };
-
+  if (!gameData)
     return (
-        <div className="game-container">
-            <h2>Status: {status}</h2>
-            <h3>Tura: {isMyTurn ? "Twój ruch" : "Czekaj na przeciwnika..."}</h3>
-            
-            <div className="board" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 100px)', gap: '5px' }}>
-                {board.map((cell, index) => (
-                    <div 
-                        key={index} 
-                        onClick={() => handleCellClick(index)}
-                        style={{ 
-                            width: '100px', 
-                            height: '100px', 
-                            border: '1px solid black', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            fontSize: '2em', 
-                            cursor: isMyTurn && !cell ? 'pointer' : 'not-allowed' 
-                        }}
-                    >
-                        {cell}
-                    </div>
-                ))}
-            </div>
-        </div>
+      <div className="min-h-screen bg-gray-900 flex justify-center">
+        <h2 className="text-white mt-20">Ładowanie gry...</h2>
+      </div>
     );
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white font-sans">
+      <h2 className="text-2xl mb-4 font-bold tracking-widest uppercase">
+        Pokój: {gameData.status}
+      </h2>
+      <h3 className="text-xl mb-8 text-blue-400">
+        {gameData.status === "WAITING_FOR_OPPONENT"
+          ? "Czekaj na przeciwnika..."
+          : isMyTurn
+            ? "Twój ruch!"
+            : "Przeciwnik myśli..."}
+      </h3>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 100px)",
+          gap: "5px",
+        }}
+      >
+        {gameData.board.map((cell, index) => (
+          <div
+            key={index}
+            onClick={() => handleCellClick(index)}
+            style={{
+              width: "100px",
+              height: "100px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "3em",
+              cursor: isMyTurn && !cell ? "pointer" : "not-allowed",
+            }}
+            className="bg-gray-800 border border-gray-600 hover:bg-gray-700 transition"
+          >
+            {cell}
+          </div>
+        ))}
+      </div>
+
+      <button
+        className="mt-12 px-6 py-3 font-semibold bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-sm"
+        onClick={() => navigate("/")}
+      >
+        Opuść grę
+      </button>
+    </div>
+  );
 };
 
 export default TicTacToeGame;

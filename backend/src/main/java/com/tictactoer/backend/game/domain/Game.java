@@ -1,5 +1,7 @@
 package com.tictactoer.backend.game.domain;
 
+import lombok.Setter;
+
 import java.util.UUID;
 
 public class Game {
@@ -8,8 +10,12 @@ public class Game {
     private final String playerX;
     private final String[] board;
 
+    @Setter
+    private String winner;
     private String playerO;
+    @Setter
     private String currentTurn;
+    @Setter
     private GameStatus status;
 
     public enum GameStatus {
@@ -55,15 +61,10 @@ public class Game {
         return currentTurn;
     }
 
-    public void setCurrentTurn(String currentTurn) {
-        this.currentTurn = currentTurn;
-    }
-
     public GameStatus getStatus() {
         return status;
     }
 
-    public void setStatus(GameStatus status) {
-        this.status = status;
-    }
+    public String getWinner() {return winner;}
+
 }
