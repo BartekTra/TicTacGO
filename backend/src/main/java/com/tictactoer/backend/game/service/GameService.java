@@ -1,9 +1,10 @@
 package com.tictactoer.backend.game.service;
 
 import com.tictactoer.backend.game.domain.Game;
+import com.tictactoer.backend.game.domain.GameMode;
 import org.springframework.stereotype.Service;
+
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class GameService {
@@ -20,8 +21,8 @@ public class GameService {
         this.gameRules = gameRules;
     }
 
-    public Game joinOrCreateGame(String playerEmail) {
-        return matchmakingService.joinOrCreateGame(playerEmail);
+    public Game joinOrCreateGame(String playerEmail, GameMode mode) {
+        return matchmakingService.joinOrCreateGame(playerEmail, mode);
     }
 
     public Game processMove(String gameId, String playerEmail, int position) {
@@ -36,34 +37,30 @@ public class GameService {
                 throw new IllegalStateException("Gra nie jest w toku!");
             }
 
-            String playerSymbol;
-            if (playerEmail.equals(game.getPlayerX())) {
-                playerSymbol = "X";
-            } else if (playerEmail.equals(game.getPlayerO())) {
-                playerSymbol = "O";
-            } else {
-                throw new IllegalStateException("Nie jesteś graczem w tej grze!");
-            }
+            String playerSymbol = determinePlayerSymbol(game, playerEmail);
 
             if (!game.getCurrentTurn().equals(playerSymbol)) {
                 throw new IllegalStateException("To nie jest Twój ruch!");
             }
-            if (game.getBoard()[position] != null) {
-                throw new IllegalStateException("To pole jest już zajęte!");
-            }
 
-            game.getBoard()[position] = playerSymbol;
+            game.executeMove(playerSymbol, position);
 
             if (gameRules.hasWon(game.getBoard(), playerSymbol)) {
                 game.setStatus(Game.GameStatus.FINISHED);
                 game.setWinner(playerEmail);
-            } else if (gameRules.isBoardFull(game.getBoard())) {
+            } else if (game.getMode() == GameMode.CLASSIC && gameRules.isBoardFull(game.getBoard())) {
                 game.setStatus(Game.GameStatus.DRAW);
             } else {
-                game.setCurrentTurn(playerSymbol.equals("X") ? "O" : "X");
+                game.switchTurn();
             }
 
             return game;
         }
+    }
+
+    private String determinePlayerSymbol(Game game, String playerEmail) {
+        if (playerEmail.equals(game.getPlayerX())) return "X";
+        if (playerEmail.equals(game.getPlayerO())) return "O";
+        throw new IllegalStateException("Nie jesteś graczem w tej grze!");
     }
 }

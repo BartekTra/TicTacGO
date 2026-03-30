@@ -1,22 +1,21 @@
 package com.tictactoer.backend.game.domain;
 
+import lombok.Getter;
 import lombok.Setter;
-
 import java.util.UUID;
 
-public class Game {
+@Getter
+public abstract class Game {
 
-    private final String gameId;
-    private final String playerX;
-    private final String[] board;
+    protected final String gameId;
+    protected final String playerX;
+    protected String playerO;
+    protected final String[] board;
+    protected final GameMode mode;
 
-    @Setter
-    private String winner;
-    private String playerO;
-    @Setter
-    private String currentTurn;
-    @Setter
-    private GameStatus status;
+    @Setter protected String winner;
+    @Setter protected String currentTurn;
+    @Setter protected GameStatus status;
 
     public enum GameStatus {
         WAITING_FOR_OPPONENT,
@@ -25,9 +24,10 @@ public class Game {
         DRAW
     }
 
-    public Game(String playerX) {
+    protected Game(String playerX, GameMode mode) {
         this.gameId = UUID.randomUUID().toString();
         this.playerX = playerX;
+        this.mode = mode;
         this.board = new String[9];
         this.currentTurn = "X";
         this.status = GameStatus.WAITING_FOR_OPPONENT;
@@ -41,30 +41,9 @@ public class Game {
         this.status = GameStatus.IN_PROGRESS;
     }
 
-    public String getGameId() {
-        return gameId;
+    public void switchTurn() {
+        this.currentTurn = this.currentTurn.equals("X") ? "O" : "X";
     }
 
-    public String getPlayerX() {
-        return playerX;
-    }
-
-    public String getPlayerO() {
-        return playerO;
-    }
-
-    public String[] getBoard() {
-        return board;
-    }
-
-    public String getCurrentTurn() {
-        return currentTurn;
-    }
-
-    public GameStatus getStatus() {
-        return status;
-    }
-
-    public String getWinner() {return winner;}
-
+    public abstract void executeMove(String playerSymbol, int position);
 }
