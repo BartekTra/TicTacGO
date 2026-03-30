@@ -1,7 +1,7 @@
 package com.tictactoer.backend.game.controller;
 import com.tictactoer.backend.game.controller.dto.MoveDTO;
-import com.tictactoer.backend.game.domain.Game;
 import com.tictactoer.backend.game.service.GameService;
+import com.tictactoer.backend.game.persistence.GameEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -23,7 +23,7 @@ public class GameController {
         try {
             String currentPlayer = principal.getName();
 
-            Game updatedGame = gameService.processMove(
+            GameEntity updatedGame = gameService.processMove(
                     moveRequest.gameId(),
                     currentPlayer,
                     moveRequest.position()

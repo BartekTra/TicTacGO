@@ -1,5 +1,4 @@
 import { useState, type ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "../../../../api/axios";
 import { InputField } from "../../../../components/InputField";
 import { Button } from "../../../../components/Button";
@@ -10,7 +9,6 @@ export const LoginForm = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [rememberMe, setRememberMe] = useState<boolean>(false);
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   const handleLogin = async (e: ChangeEvent<HTMLFormElement>) => {

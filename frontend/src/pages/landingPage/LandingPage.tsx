@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 
@@ -9,7 +8,8 @@ const LandingPage = () => {
 
   const handleGameJoin = (gameType: GameMode) => async () => {
     try {
-      const { data } = await api.post("/game/join");
+      const modeParam = gameType === "classic" ? "CLASSIC" : "INFINITE";
+      const { data } = await api.post(`/game/join?mode=${modeParam}`);
       navigate(`/game/${data.gameId}`, { state: { initialGameData: data } });
     } catch (err) {
       console.error("Błąd podczas dołączania do gry:", err);
