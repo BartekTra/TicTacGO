@@ -1,19 +1,11 @@
 package com.tictactoer.backend.game.persistence;
 
 import com.tictactoer.backend.game.domain.GameMode;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.AccessLevel;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import lombok.Setter;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -21,12 +13,8 @@ import java.util.UUID;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "game_type", discriminatorType = DiscriminatorType.STRING)
 @Getter
-public abstract class
-
-
-GameEntity {
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+@Setter
+public abstract class GameEntity {
 
     @Id
     @Column(name = "game_id", nullable = false, length = 36)
@@ -38,35 +26,14 @@ GameEntity {
     @Column(name = "player_o", length = 255)
     private String playerO;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "board", nullable = false)
-    @JsonIgnore
-    private String boardJson;
+    @Column(name = "board", nullable = false, length = 9)
+    private String board;
 
-    @Transient
-    @JsonIgnore
-    @Getter(AccessLevel.NONE)
-    protected String[] boardCells;
+    @Column(name = "moves_x", nullable = false, length = 255)
+    private String movesX;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @JsonIgnore
-    @Column(name = "moves_x", nullable = false)
-    private String movesXJson;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @JsonIgnore
-    @Column(name = "moves_o", nullable = false)
-    private String movesOJson;
-
-    @Transient
-    @JsonIgnore
-    @Getter(AccessLevel.NONE)
-    protected List<Integer> movesX;
-
-    @Transient
-    @JsonIgnore
-    @Getter(AccessLevel.NONE)
-    protected List<Integer> movesO;
+    @Column(name = "moves_o", nullable = false, length = 255)
+    private String movesO;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "mode", nullable = false, length = 20)
@@ -79,19 +46,22 @@ GameEntity {
     @Column(name = "current_turn", nullable = false, length = 1)
     private String currentTurn;
 
-    @JsonIgnore
     @Column(name = "turn_started_at")
     private Instant turnStartedAt;
 
     @Column(name = "winner", length = 255)
     private String winner;
 
-    @JsonIgnore
     @Column(name = "empty_since")
     private Instant emptySince;
 
+    @Column(name = "finished_at")
+    private Instant finishedAt;
+
+    @Column(name = "finished_by_inactivity", nullable = false)
+    private boolean finishedByInactivity;
+
     @Version
-    @JsonIgnore
     private Long version;
 
     protected GameEntity() {
@@ -103,29 +73,18 @@ GameEntity {
         this.playerX = playerX;
         this.playerO = playerO;
         this.mode = mode;
-        this.boardCells = new String[9];
-        this.boardJson = toJson(boardCells);
-        this.movesX = new ArrayList<>(3);
-        this.movesO = new ArrayList<>(3);
-        this.movesXJson = toJsonIntList(movesX);
-        this.movesOJson = toJsonIntList(movesO);
+        this.board = "---------";
+        this.movesX = "";
+        this.movesO = "";
         this.currentTurn = "X";
         this.status = GameStatus.WAITING_FOR_OPPONENT;
         this.turnStartedAt = null;
         this.emptySince = null;
+        this.finishedAt = null;
+        this.finishedByInactivity = false;
     }
 
-    @PostLoad
-    protected void onPostLoad() {
-        this.boardCells = fromJson(boardJson);
-        this.movesX = fromJsonIntList(movesXJson);
-        this.movesO = fromJsonIntList(movesOJson);
-    }
-
-    public String[] getBoard() {
-        return boardCells;
-    }
-
+    // Logic has been moved to GameEngine, these methods are primarily for status updates
     public void joinPlayerO(String playerO) {
         if (this.playerO != null) {
             throw new IllegalStateException("Gra jest już pełna!");
@@ -136,6 +95,8 @@ GameEntity {
         this.turnStartedAt = Instant.now();
         this.emptySince = null;
         this.winner = null;
+        this.finishedAt = null;
+        this.finishedByInactivity = false;
     }
 
     public void switchTurn(Instant now) {
@@ -147,25 +108,17 @@ GameEntity {
         this.status = GameStatus.FINISHED;
         this.winner = winner;
         this.turnStartedAt = null;
+        this.finishedAt = Instant.now();
+        this.finishedByInactivity = false;
     }
 
     public void markDraw() {
         this.status = GameStatus.DRAW;
         this.winner = null;
         this.turnStartedAt = null;
+        this.finishedAt = Instant.now();
+        this.finishedByInactivity = false;
     }
-
-    protected void notifyBoardChanged() {
-        // Aktualizujemy persistent reprezentację JSONB.
-        this.boardJson = toJson(boardCells);
-    }
-
-    protected void notifyMovesChanged() {
-        this.movesXJson = toJsonIntList(movesX);
-        this.movesOJson = toJsonIntList(movesO);
-    }
-
-    public abstract void executeMove(String playerSymbol, int position);
 
     public void startGame(Instant now) {
         this.status = GameStatus.IN_PROGRESS;
@@ -173,16 +126,14 @@ GameEntity {
         this.currentTurn = "X";
         this.turnStartedAt = now;
         this.emptySince = null;
+        this.finishedAt = null;
+        this.finishedByInactivity = false;
     }
 
     public void resetBoardAndMoves() {
-        this.boardCells = new String[9];
-        this.boardJson = toJson(boardCells);
-
-        this.movesX = new ArrayList<>(3);
-        this.movesO = new ArrayList<>(3);
-        this.movesXJson = toJsonIntList(movesX);
-        this.movesOJson = toJsonIntList(movesO);
+        this.board = "---------";
+        this.movesX = "";
+        this.movesO = "";
     }
 
     public void resetToWaitingForOpponent(Instant now) {
@@ -192,6 +143,8 @@ GameEntity {
         this.turnStartedAt = null;
         resetBoardAndMoves();
         this.emptySince = (this.playerX == null && this.playerO == null) ? now : null;
+        this.finishedAt = null;
+        this.finishedByInactivity = false;
     }
 
     public void removePlayerAndReset(String playerEmail, Instant now) {
@@ -216,6 +169,18 @@ GameEntity {
     public void assignPlayers(String playerX, String playerO) {
         this.playerX = playerX;
         this.playerO = playerO;
+        this.emptySince = null;
+        this.winner = null;
+        this.finishedAt = null;
+        this.finishedByInactivity = false;
+    }
+
+    public void markFinishedByInactivity(String winner, Instant now) {
+        this.status = GameStatus.FINISHED;
+        this.winner = winner;
+        this.turnStartedAt = null;
+        this.finishedAt = now;
+        this.finishedByInactivity = true;
     }
 
     public enum GameStatus {
@@ -223,50 +188,6 @@ GameEntity {
         IN_PROGRESS,
         FINISHED,
         DRAW
-    }
-
-    private static String toJson(String[] cells) {
-        try {
-            return OBJECT_MAPPER.writeValueAsString(cells);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Nie udało się zamienić planszy na JSON", e);
-        }
-    }
-
-    private static String[] fromJson(String json) {
-        if (json == null) return new String[9];
-        try {
-            String[] cells = OBJECT_MAPPER.readValue(json, String[].class);
-            if (cells.length != 9) {
-                // Bezpieczeństwo, jeśli kiedyś zapis poszedł w innym formacie.
-                String[] normalized = new String[9];
-                System.arraycopy(cells, 0, normalized, 0, Math.min(cells.length, 9));
-                return normalized;
-            }
-            return cells;
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Nie udało się zamienić JSON na planszę", e);
-        }
-    }
-
-    private static String toJsonIntList(List<Integer> cells) {
-        try {
-            return OBJECT_MAPPER.writeValueAsString(cells);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Nie udało się zamienić listy ruchów na JSON", e);
-        }
-    }
-
-    private static List<Integer> fromJsonIntList(String json) {
-        if (json == null) return Collections.emptyList();
-        try {
-            return OBJECT_MAPPER.readValue(
-                    json,
-                    OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, Integer.class)
-            );
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Nie udało się zamienić JSON na listę ruchów", e);
-        }
     }
 }
 

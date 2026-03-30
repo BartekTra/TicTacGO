@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/players")
 @RequiredArgsConstructor
@@ -17,7 +19,9 @@ public class PlayerController {
 
     @GetMapping("/me")
     public PlayerProfileDTO getMyProfile(Principal principal) {
+        log.info("Request for profile from user: {}", principal != null ? principal.getName() : "UNAUTHENTICATED");
         if (principal == null) {
+            log.warn("Profile request failed: Unauthenticated user");
             throw new SecurityException("Musisz być zalogowany!");
         }
 

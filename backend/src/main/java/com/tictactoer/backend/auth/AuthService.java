@@ -8,7 +8,9 @@ import com.tictactoer.backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -18,7 +20,9 @@ public class AuthService {
     private final JwtService jwtService;
 
     public AuthResult register(AuthRequest request) {
+        log.info("Attempting to register new user: {}", request.username());
         if (playerRepository.existsByUsername(request.username())) {
+            log.warn("Registration failed: Username {} already exists", request.username());
             throw new UserAlreadyExistsException("Nazwa użytkownika jest już zajęta!");
         }
 
@@ -37,10 +41,15 @@ public class AuthService {
     }
 
     public AuthResult login(AuthRequest request) {
+        log.info("Attempting login for email: {}", request.email());
         PlayerEntity player = playerRepository.findByEmail(request.email())
-                .orElseThrow(() -> new InvalidCredentialsException("Nieprawidłowy login lub hasło!"));
+                .orElseThrow(() -> {
+                    log.warn("Login failed: User with email {} not found", request.email());
+                    return new InvalidCredentialsException("Nieprawidłowy login lub hasło!");
+                });
 
         if (!passwordEncoder.matches(request.password(), player.getPassword())) {
+            log.warn("Login failed: Incorrect password for email {}", request.email());
             throw new InvalidCredentialsException("Nieprawidłowy login lub hasło!");
         }
 
@@ -51,7 +60,8 @@ public class AuthService {
         String token = jwtService.generateToken(player.getEmail());
         AuthResponse response = new AuthResponse(
                 player.getId(), player.getEmail(), player.getUsername(),
-                player.getGamesPlayed(), player.getGamesWon(), player.getWinRate()
+                player.getGamesPlayed(), player.getGamesWon(), player.getWinRate(),
+                token
         );
         return new AuthResult(token, response);
     }

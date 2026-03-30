@@ -13,13 +13,16 @@ const LoginPage = () => {
     let testIndex = index === 2 ? "2" : "";
 
     try {
-      const { data } = await api.post<User>("/auth/login", {
+      const response = await api.post<User>("/auth/login", {
         email: `testuje${testIndex}@wp.pl`,
         password: "12qwaszx",
       });
 
-      dispatch(setCredentials(data));
-      console.log("Zalogowano:", data);
+      const token = response.data.token;
+      console.log("[Login] Wyodrębniony token JWT z Body: ", token);
+      
+      dispatch(setCredentials({ user: response.data, token }));
+      console.log("Zalogowano:", response.data);
       navigate("/");
     } catch (e: any) {
       if (e.response && e.response.data) {

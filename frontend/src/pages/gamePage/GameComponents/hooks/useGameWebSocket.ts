@@ -6,9 +6,12 @@ export interface GameData {
   gameId: string;
   playerX: string | null;
   playerO: string | null;
-  board: (string | null)[];
-  currentTurn: string;
+  board: string;
+  movesX: string;
+  movesO: string;
+  mode: string;
   status: string;
+  currentTurn: string;
   winner: string | null;
 }
 
@@ -39,8 +42,13 @@ export const useTicTacToeSocket = (
   useEffect(() => {
     if (!gameId || !userId) return;
 
+    const token = localStorage.getItem("jwtToken");
+
     const client = new Client({
       brokerURL: "ws://localhost:8080/ws-game",
+      connectHeaders: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
       debug: (str: string) => console.log("STOMP: " + str),
       onConnect: () => {
         console.log("Połączono z serwerem gry!");
@@ -118,12 +126,15 @@ export const useTicTacToeSocket = (
     const onBeforeUnload = () => {
       if (skipLeaveRef.current) return;
       try {
-        // `keepalive` + `credentials: include` maksymalizuje szansę wysłania requesta podczas zamykania karty.
+        // wysyłamy bez ciasteczek ale z JWT Bearer
+        const token = localStorage.getItem("jwtToken");
         fetch(leaveUrl, {
           method: "POST",
           keepalive: true,
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
           body: "",
         }).catch(() => undefined);
       } catch {
@@ -141,10 +152,13 @@ export const useTicTacToeSocket = (
       const leaveUrl = `${import.meta.env.VITE_API_ADDRESS}/game/leave?gameId=${encodeURIComponent(
         gameId
       )}`;
+      const token = localStorage.getItem("jwtToken");
       fetch(leaveUrl, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: "",
       }).catch(() => undefined);
     }

@@ -14,5 +14,6 @@ public record AuthResponse(
         String username,
         int gamesPlayed,
         int gamesWon,
-        int winRate
+        int winRate,
+        String token
         ) {}
