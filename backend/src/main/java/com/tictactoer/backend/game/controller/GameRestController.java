@@ -1,7 +1,7 @@
 package com.tictactoer.backend.game.controller;
 
-import com.tictactoer.backend.game.domain.Game;
 import com.tictactoer.backend.game.domain.GameMode;
+import com.tictactoer.backend.game.persistence.GameEntity;
 import com.tictactoer.backend.game.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ public class GameRestController {
     private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/join")
-    public ResponseEntity<Game> joinGame(
+    public ResponseEntity<GameEntity> joinGame(
             Principal principal,
             @RequestParam(defaultValue = "CLASSIC") GameMode mode) {
 
@@ -30,12 +30,29 @@ public class GameRestController {
             throw new SecurityException("Musisz być zalogowany!");
         }
 
-        Game game = gameService.joinOrCreateGame(principal.getName(), mode);
+        GameEntity game = gameService.joinOrCreateGame(principal.getName(), mode);
 
-        if (game.getStatus() == Game.GameStatus.IN_PROGRESS) {
+        if (game.getStatus() == GameEntity.GameStatus.IN_PROGRESS) {
             messagingTemplate.convertAndSend("/topic/game." + game.getGameId(), game);
         }
 
         return ResponseEntity.ok(game);
+    }
+
+    @PostMapping("/leave")
+    public ResponseEntity<GameEntity> leaveGame(
+            Principal principal,
+            @RequestParam String gameId
+    ) {
+        if (principal == null) {
+            throw new SecurityException("Musisz być zalogowany!");
+        }
+
+        GameEntity updatedGame = gameService.leaveGame(gameId, principal.getName());
+
+        // Aktualizujemy widok dla ewentualnego pozostałego gracza.
+        messagingTemplate.convertAndSend("/topic/game." + updatedGame.getGameId(), updatedGame);
+
+        return ResponseEntity.ok(updatedGame);
     }
 }

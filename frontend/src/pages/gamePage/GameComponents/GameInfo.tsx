@@ -5,6 +5,7 @@ interface GameInfoProps {
   currentTurn: string | null;
   opponentId?: string | null;
   winner: string | null;
+  errorMessage?: string | null;
 }
 
 export const GameInfo: React.FC<GameInfoProps> = ({
@@ -12,9 +13,15 @@ export const GameInfo: React.FC<GameInfoProps> = ({
   currentTurn,
   opponentId,
   winner,
+  errorMessage,
 }) => {
   return (
     <div className="flex flex-col items-center space-y-2 mb-4 text-center">
+      {errorMessage && (
+        <p className="text-yellow-300 font-bold text-sm max-w-[420px]">
+          {errorMessage}
+        </p>
+      )}
       {countdown !== null && (
         <p className="text-red-500 font-bold text-xl">
           Przekierowanie za: {countdown}

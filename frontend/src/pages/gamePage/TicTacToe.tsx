@@ -1,27 +1,37 @@
 import React from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useTicTacToeSocket, type GameData } from "./GameComponents/hooks/useGameWebSocket";
 
 const TicTacToeGame: React.FC = () => {
   const { gameId } = useParams<string>();
   if (!gameId) return <p>XD</p>
-  const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
 
-  const { gameData, sendMove } = useTicTacToeSocket(
+  const { gameData, sendMove, waitingForServerState, leaveGame } = useTicTacToeSocket(
     gameId,
     user?.email,
     location.state?.initialGameData as GameData | null,
   );
 
-  const mySymbol = gameData?.playerX === user?.email ? "X" : "O";
+  const mySymbol =
+    gameData?.playerX === user?.email
+      ? "X"
+      : gameData?.playerO === user?.email
+        ? "O"
+        : null;
   const isMyTurn =
-    gameData?.currentTurn === mySymbol && gameData?.status === "IN_PROGRESS";
+    mySymbol !== null &&
+    gameData?.currentTurn === mySymbol &&
+    gameData?.status === "IN_PROGRESS";
 
   const handleCellClick = (index: number) => {
-    if (!isMyTurn || !gameData || gameData.board[index] !== null || !gameId) return;
+    if (!isMyTurn) return;
+    if (!gameData) return;
+    if (waitingForServerState) return;
+    if (gameData.board[index] !== null) return;
+    if (!gameId) return;
     sendMove(gameId, index);
   };
 
@@ -74,7 +84,8 @@ const TicTacToeGame: React.FC = () => {
 
       <button
         className="mt-12 px-6 py-3 font-semibold bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-sm"
-        onClick={() => navigate("/")}
+        onClick={leaveGame}
+        disabled={waitingForServerState}
       >
         Opuść grę
       </button>

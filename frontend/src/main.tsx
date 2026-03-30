@@ -5,7 +5,6 @@ import { router } from "./router.tsx";
 import { Provider } from "react-redux";
 
 import { RouterProvider } from "react-router-dom";
-import { UserProvider } from "./context/UserContext.tsx";
 import { store } from "./app/store.ts";
 
 createRoot(document.getElementById("root")!).render(
