@@ -69,13 +69,12 @@ public class GameMatchmakingService {
                         requestedMode
                 );
 
-        // 1) Dołącz do gry z jednym zajętym slotem (drugi gracz).
         if (waitingWithXOpt.isPresent()) {
                 GameEntity game = waitingWithXOpt.get();
                 if (game.getPlayerX() != null && !game.getPlayerX().equals(playerEmail)) {
                     log.info("Matchmaking: Player {} joining existing game {} as O", playerEmail, game.getGameId());
                     game.resetBoardAndMoves();
-                    game.assignPlayers(game.getPlayerX(), playerEmail); // istniejący X + dołączający jako O
+                    game.assignPlayers(game.getPlayerX(), playerEmail);
                     game.startGame(now);
                     gameRepository.save(game);
                     gameRepository.flush();
@@ -93,7 +92,7 @@ public class GameMatchmakingService {
                 if (game.getPlayerO() != null && !game.getPlayerO().equals(playerEmail)) {
                     log.info("Matchmaking: Player {} joining existing game {} as X", playerEmail, game.getGameId());
                     game.resetBoardAndMoves();
-                    game.assignPlayers(playerEmail, game.getPlayerO()); // dołączający jako X + istniejący O
+                    game.assignPlayers(playerEmail, game.getPlayerO());
                     game.startGame(now);
                     gameRepository.save(game);
                     gameRepository.flush();
@@ -106,7 +105,6 @@ public class GameMatchmakingService {
                 }
             }
 
-            // 2) Jeśli nie ma gry z jednym graczem, spróbuj użyć pustej gry (jeśli nie jest starsza niż 60s).
             Optional<GameEntity> emptyGameOpt = gameRepository
                     .findFirstByStatusAndModeAndPlayerXIsNullAndPlayerOIsNullAndEmptySinceAfter(
                             GameEntity.GameStatus.WAITING_FOR_OPPONENT,
@@ -131,7 +129,6 @@ public class GameMatchmakingService {
                 return game;
             }
 
-            // 3) Brak odpowiedniej gry - tworzymy nową.
             boolean firstGetsX = ThreadLocalRandom.current().nextBoolean();
             String playerX = firstGetsX ? playerEmail : null;
             String playerO = firstGetsX ? null : playerEmail;

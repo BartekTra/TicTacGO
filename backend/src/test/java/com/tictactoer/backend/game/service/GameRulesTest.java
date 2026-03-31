@@ -60,7 +60,7 @@ class GameRulesTest {
         // when & then
         assertThat(gameRules.hasWon(boardEmpty, "X")).isFalse();
         assertThat(gameRules.hasWon(boardMixed, "X")).isFalse();
-        assertThat(gameRules.hasWon(boardMixed, "O")).isFalse(); // Drawn game
+        assertThat(gameRules.hasWon(boardMixed, "O")).isFalse();
     }
 
     @Test

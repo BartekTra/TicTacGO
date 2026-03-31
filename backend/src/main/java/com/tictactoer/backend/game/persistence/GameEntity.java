@@ -84,7 +84,6 @@ public abstract class GameEntity {
         this.finishedByInactivity = false;
     }
 
-    // Logic has been moved to GameEngine, these methods are primarily for status updates
     public void joinPlayerO(String playerO) {
         if (this.playerO != null) {
             throw new IllegalStateException("Gra jest już pełna!");

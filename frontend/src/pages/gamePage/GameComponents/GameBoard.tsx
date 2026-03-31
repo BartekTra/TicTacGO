@@ -20,8 +20,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     if (!movesStr) return null;
     const split = movesStr.split(",").filter((s) => s.trim() !== "");
     if (split.length < 3) return null;
-    // The oldest move is the first one in the list. Wait, in backend, new moves are appended.
-    // So split[0] is the oldest move.
     return parseInt(split[0], 10);
   };
 

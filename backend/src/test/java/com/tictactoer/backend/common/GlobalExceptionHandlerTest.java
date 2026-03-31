@@ -101,7 +101,6 @@ class GlobalExceptionHandlerTest {
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNotNull();
-        // Verifies the obfuscation logic is applied rather than ex.getMessage()
         assertThat(response.getBody().get("message")).isEqualTo("Wystąpił nieoczekiwany błąd serwera.");
     }
 }

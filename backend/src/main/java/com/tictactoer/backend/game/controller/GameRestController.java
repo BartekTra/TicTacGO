@@ -57,7 +57,6 @@ public class GameRestController {
 
         GameEntity updatedGame = gameService.leaveGame(gameId, principal.getName());
 
-        // Aktualizujemy widok dla ewentualnego pozostałego gracza.
         messagingTemplate.convertAndSend("/topic/game." + updatedGame.getGameId(), GameResponseDTO.fromEntity(updatedGame));
 
         return ResponseEntity.ok(GameResponseDTO.fromEntity(updatedGame));

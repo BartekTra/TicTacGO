@@ -51,9 +51,6 @@ class GameServiceTest {
     void setUp() {
         activeGame = new ClassicGameEntity(playerX, playerO);
         activeGame.startGame(java.time.Instant.now());
-        // For testing purposes, we hardcode the game id reflection or assume it sets up internally.
-        // It's assigned via UUID in constructor, but tests don't strictly require asserting its exact value
-        // unless explicitly testing findById, in which case we mock the query lookup.
     }
 
     @Test
@@ -96,10 +93,9 @@ class GameServiceTest {
     void shouldThrowIllegalStateException_whenWrongPlayerAttemptsMove() {
         // given
         given(gameRepository.findById(gameId)).willReturn(Optional.of(activeGame));
-        // Current turn is X automatically.
 
         // when & then
-        assertThatThrownBy(() -> gameService.processMove(gameId, playerO, 0)) // O tries to move on X's turn
+        assertThatThrownBy(() -> gameService.processMove(gameId, playerO, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("To nie jest Twój ruch!");
     }
@@ -127,7 +123,7 @@ class GameServiceTest {
 
         // then
         verify(gameEngine).executeMove(activeGame, "X", 4);
-        assertThat(result.getCurrentTurn()).isEqualTo("O"); // Switched turn
+        assertThat(result.getCurrentTurn()).isEqualTo("O");
         verify(gameRepository).save(activeGame);
         verify(gameTimeoutScheduler).scheduleTurnInactivity(any(), any(), eq("O"));
     }
@@ -136,7 +132,7 @@ class GameServiceTest {
     void shouldMarkFinished_whenPlayerWinsWithMove() {
         // given
         given(gameRepository.findById(gameId)).willReturn(Optional.of(activeGame));
-        given(gameRules.hasWon(anyString(), eq("X"))).willReturn(true); // Game engine intercepts the board directly
+        given(gameRules.hasWon(anyString(), eq("X"))).willReturn(true);
 
         // when
         GameEntity result = gameService.processMove(gameId, playerX, 0);
@@ -183,15 +179,12 @@ class GameServiceTest {
         // given
         given(gameRepository.findById(gameId)).willReturn(Optional.of(activeGame));
 
-        // when P1 leaves
         GameEntity result = gameService.leaveGame(gameId, playerX);
 
-        // then P1 is stripped, game resets to waiting, scheduler is NOT called empty yet
         assertThat(result.getPlayerX()).isNull();
         assertThat(result.getStatus()).isEqualTo(GameEntity.GameStatus.WAITING_FOR_OPPONENT);
         verify(gameTimeoutScheduler, never()).scheduleEmptyDeletion(any(), any());
 
-        // when P2 leaves
         gameService.leaveGame(gameId, playerO);
         
         // then

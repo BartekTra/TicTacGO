@@ -56,7 +56,6 @@ export const useTicTacToeSocket = (
         client.subscribe(`/topic/game.${gameId}`, (message) => {
           const data: GameData = JSON.parse(message.body);
           setGameData(data);
-          // Po nowym stanie z backendu odblokowujemy UI.
           setWaitingForServerState(false);
           setErrorMessage(null);
 
@@ -64,7 +63,6 @@ export const useTicTacToeSocket = (
             if (intervalRef.current) clearInterval(intervalRef.current);
             if (timerRef.current) clearTimeout(timerRef.current);
 
-            // Nie wysyłamy "leave" podczas automatycznego przekierowania.
             skipLeaveRef.current = true;
 
             setCountdown(3);
@@ -81,7 +79,6 @@ export const useTicTacToeSocket = (
               });
             }, 1000);
 
-            // Zakończmy nasłuch, żeby nie wysyłać zbędnych eventów.
             if (client.active) client.deactivate();
           }
         });
@@ -99,7 +96,6 @@ export const useTicTacToeSocket = (
             setWaitingForServerState(true);
           } else {
             setErrorMessage(body ? `Niedozwolony ruch: ${body}` : "Niedozwolony ruch.");
-            // Przy innych błędach nie blokujemy długoterminowo UI.
             setWaitingForServerState(false);
           }
         });

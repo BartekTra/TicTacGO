@@ -50,7 +50,7 @@ class GameEngineTest {
     void shouldThrowIllegalStateException_whenClassicSpotIsAlreadyTaken() {
         // given
         GameEntity classicGame = new ClassicGameEntity("X", "O");
-        classicGame.setBoard("----X----"); // Middle taken
+        classicGame.setBoard("----X----");
 
         // when & then
         assertThatThrownBy(() -> gameEngine.executeMove(classicGame, "O", 4))
@@ -75,16 +75,15 @@ class GameEngineTest {
     void shouldOverwriteOldestMove_andFreePosition_inInfiniteGame() {
         // given
         GameEntity infiniteGame = new InfiniteGameEntity("X", "O");
-        infiniteGame.setBoard("XXX------"); // X takes 0, 1, 2
+        infiniteGame.setBoard("XXX------");
         infiniteGame.setMovesX("0,1,2");
 
-        // when X plays 3, the oldest move (0) must be cleared and 3 must be occupied.
         gameEngine.executeMove(infiniteGame, "X", 3);
 
         // then
-        assertThat(infiniteGame.getBoard().charAt(0)).isEqualTo('-'); // Oldest freed
-        assertThat(infiniteGame.getBoard().charAt(3)).isEqualTo('X'); // New occupied
-        assertThat(infiniteGame.getMovesX()).isEqualTo("1,2,3"); // Queue shifted
+        assertThat(infiniteGame.getBoard().charAt(0)).isEqualTo('-'); 
+        assertThat(infiniteGame.getBoard().charAt(3)).isEqualTo('X'); 
+        assertThat(infiniteGame.getMovesX()).isEqualTo("1,2,3"); 
     }
 
     @Test
@@ -94,13 +93,11 @@ class GameEngineTest {
         infiniteGame.setBoard("XXX------"); 
         infiniteGame.setMovesX("0,1,2");
 
-        // when X plays precisely on the spot that is currently its oldest (which is 0).
-        // It should wipe the old 0, and immediately place the new 0 without throwing an error.
         gameEngine.executeMove(infiniteGame, "X", 0);
 
         // then
         assertThat(infiniteGame.getBoard().charAt(0)).isEqualTo('X');
-        assertThat(infiniteGame.getMovesX()).isEqualTo("1,2,0"); // 0 is now the newest move
+        assertThat(infiniteGame.getMovesX()).isEqualTo("1,2,0");
     }
 
     @Test
@@ -111,12 +108,11 @@ class GameEngineTest {
         infiniteGame.setMovesX("4");
         infiniteGame.setMovesO("2");
 
-        // when & then (X tries spot 2 taken by O)
+        // when & then
         assertThatThrownBy(() -> gameEngine.executeMove(infiniteGame, "X", 2))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("To pole jest już zajęte!");
                 
-        // (X tries spot 4 taken by its own new move)
         assertThatThrownBy(() -> gameEngine.executeMove(infiniteGame, "X", 4))
                 .isInstanceOf(IllegalStateException.class);
     }

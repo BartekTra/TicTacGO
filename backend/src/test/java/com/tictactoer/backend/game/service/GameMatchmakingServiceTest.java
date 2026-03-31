@@ -39,8 +39,6 @@ class GameMatchmakingServiceTest {
     void setUp() throws Exception {
         gameMatchmakingService = new GameMatchmakingService(gameRepository, gameTimeoutScheduler);
 
-        // We use a mock of the same class to inject into the @Lazy @Autowired 'self' reference.
-        // This isolates the retry orchestrator (joinOrCreateGame) from the transactional unit (joinOrCreateGameAttempt).
         selfProxyMock = Mockito.mock(GameMatchmakingService.class);
         Field selfField = GameMatchmakingService.class.getDeclaredField("self");
         selfField.setAccessible(true);
@@ -81,14 +79,11 @@ class GameMatchmakingServiceTest {
                 .isInstanceOf(GameConcurrencyConflictException.class)
                 .hasMessageContaining("Konflikt współbieżności podczas dołączania do gry. Spróbuj ponownie.");
 
-        // maxRetries is currently hardcoded to 5 in the service
         verify(selfProxyMock, times(5)).joinOrCreateGameAttempt(playerEmail, mode);
     }
 
     @Test
     void shouldJoinExistingGameAsO_whenGameWaitingWithX() {
-        // To precisely test joinOrCreateGameAttempt, we invoke it directly on the real service instance.
-        // given
         String playerX = "playerX@test.com";
         String playerO = "playerO@test.com";
         GameMode mode = GameMode.CLASSIC;
@@ -119,8 +114,6 @@ class GameMatchmakingServiceTest {
         String playerO = "playerO@test.com";
         GameMode mode = GameMode.INFINITE;
 
-        // Note: ClassicGameEntity constructor assigns playerX to arg1, playerO to arg2. 
-        // We set playerX to null to simulate waiting with O.
         GameEntity waitingGame = new ClassicGameEntity(null, playerO);
         waitingGame.setMode(mode);
 
@@ -171,10 +164,9 @@ class GameMatchmakingServiceTest {
         // then
         assertThat(result.getStatus()).isEqualTo(GameEntity.GameStatus.WAITING_FOR_OPPONENT);
         
-        // The service randomly assigns X or O to the first player joining an empty game
         boolean playerGotX = player.equals(result.getPlayerX());
         boolean playerGotO = player.equals(result.getPlayerO());
-        assertThat(playerGotX ^ playerGotO).isTrue(); // Exactly one must be true
+        assertThat(playerGotX ^ playerGotO).isTrue();
         
         verify(gameRepository).save(emptyGame);
         verify(gameRepository).flush();

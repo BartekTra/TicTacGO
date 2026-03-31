@@ -113,7 +113,7 @@ class GameRestControllerTest {
     void shouldReturnLeftGameResponseAndBroadcastToTopic_whenGameIsLeft() {
         // given
         given(principal.getName()).willReturn("player@test.com");
-        given(gameService.leaveGame("game123", "player@test.com")).willReturn(waitingGame); // e.g. resets down to waiting status
+        given(gameService.leaveGame("game123", "player@test.com")).willReturn(waitingGame);
 
         // when
         ResponseEntity<GameResponseDTO> response = gameRestController.leaveGame(principal, "game123");
@@ -122,7 +122,6 @@ class GameRestControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody().status()).isEqualTo(GameEntity.GameStatus.WAITING_FOR_OPPONENT.name());
 
-        // We always immediately broadcast left events so UI elements catch it
         verify(messagingTemplate).convertAndSend(
                 eq("/topic/game." + waitingGame.getGameId()),
                 any(GameResponseDTO.class)
