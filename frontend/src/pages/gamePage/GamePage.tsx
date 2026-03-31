@@ -9,12 +9,12 @@ import {
 
 import { PlayerInfo } from "./GameComponents/PlayerInfo";
 import PlayerTimerWrapper from "./GameComponents/PlayerTimerWrapper";
-import { useUser } from "../../context/UserContext";
+import { useAppSelector } from "../../app/hooks";
 
 const GamePage: React.FC = () => {
   const { gameId } = useParams<string>();
-  const { user } = useUser();
-  if (!user || !gameId) return <p> loading </p>;
+  const user = useAppSelector((state) => state.auth.user);
+  if (!user || !gameId) return <p className="text-white mt-10 text-center">Loading session...</p>;
   const location = useLocation();
   const {
     gameData,
@@ -47,7 +47,7 @@ const GamePage: React.FC = () => {
     if (waitingForServerState) return;
     if (!isMyTurn) return;
     if (gameData.status !== "IN_PROGRESS") return;
-    if (gameData.board[index] !== null) return;
+    if (gameData.board[index] !== "-") return;
 
     sendMove(gameId, index);
   };
@@ -98,7 +98,7 @@ const GamePage: React.FC = () => {
             </PlayerTimerWrapper>
           </div>
 
-          <GameBoard boardString={gameData.board} onMove={handleMove} />
+          <GameBoard gameData={gameData} isMyTurn={isMyTurn} onMove={handleMove} />
           {/* gracz X */}
           <div className="self-end">
             <PlayerTimerWrapper

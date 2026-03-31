@@ -3,7 +3,6 @@ package com.tictactoer.backend.player;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Formula;
 
 import java.util.UUID;
 
@@ -31,10 +30,7 @@ public class PlayerEntity {
     @Column(nullable = false)
     private int gamesWon = 0;
 
-    @Formula("CASE " +
-            "  WHEN games_played = 0 THEN 0 " +
-            "  ELSE CAST(CEIL(CAST(games_won AS float) * 100 / games_played) AS int) " +
-            "END")
+    @Transient
     private int winRate;
 
     public PlayerEntity(String email, String username, String password ) {
@@ -58,5 +54,8 @@ public class PlayerEntity {
     public int getGamesPlayed() { return gamesPlayed; }
     public int getGamesWon() { return gamesWon; }
     public String getPassword() { return password; }
-    public int getWinRate() { return winRate; }
+    public int getWinRate() {
+        if (gamesPlayed == 0) return 0;
+        return (int) Math.ceil(((double) gamesWon * 100) / gamesPlayed);
+    }
 }

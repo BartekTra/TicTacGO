@@ -1,15 +1,12 @@
-import { createBrowserRouter, Outlet } from "react-router-dom";
-import { UserProvider } from "./context/UserContext";
+import { createBrowserRouter } from "react-router-dom";
+import { AuthInitializer } from "./features/auth/AuthInitializer";
 import LoginPage from "./pages/authentication/loginPage/LoginPage";
 import LandingPage from "./pages/landingPage/LandingPage";
 import GamePage from "./pages/gamePage/GamePage";
+
 export const router = createBrowserRouter([
   {
-    element: (
-      <UserProvider>
-        <Outlet />
-      </UserProvider>
-    ),
+    element: <AuthInitializer />,
     children: [
       {
         path: "/",

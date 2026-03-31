@@ -6,9 +6,12 @@ export interface GameData {
   gameId: string;
   playerX: string | null;
   playerO: string | null;
-  board: (string | null)[];
-  currentTurn: string;
+  board: string;
+  movesX: string;
+  movesO: string;
+  mode: string;
   status: string;
+  currentTurn: string;
   winner: string | null;
 }
 
@@ -39,8 +42,13 @@ export const useTicTacToeSocket = (
   useEffect(() => {
     if (!gameId || !userId) return;
 
+    const token = localStorage.getItem("jwtToken");
+
     const client = new Client({
       brokerURL: "ws://localhost:8080/ws-game",
+      connectHeaders: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
       debug: (str: string) => console.log("STOMP: " + str),
       onConnect: () => {
         console.log("Połączono z serwerem gry!");
@@ -48,7 +56,6 @@ export const useTicTacToeSocket = (
         client.subscribe(`/topic/game.${gameId}`, (message) => {
           const data: GameData = JSON.parse(message.body);
           setGameData(data);
-          // Po nowym stanie z backendu odblokowujemy UI.
           setWaitingForServerState(false);
           setErrorMessage(null);
 
@@ -56,7 +63,6 @@ export const useTicTacToeSocket = (
             if (intervalRef.current) clearInterval(intervalRef.current);
             if (timerRef.current) clearTimeout(timerRef.current);
 
-            // Nie wysyłamy "leave" podczas automatycznego przekierowania.
             skipLeaveRef.current = true;
 
             setCountdown(3);
@@ -73,7 +79,6 @@ export const useTicTacToeSocket = (
               });
             }, 1000);
 
-            // Zakończmy nasłuch, żeby nie wysyłać zbędnych eventów.
             if (client.active) client.deactivate();
           }
         });
@@ -91,7 +96,6 @@ export const useTicTacToeSocket = (
             setWaitingForServerState(true);
           } else {
             setErrorMessage(body ? `Niedozwolony ruch: ${body}` : "Niedozwolony ruch.");
-            // Przy innych błędach nie blokujemy długoterminowo UI.
             setWaitingForServerState(false);
           }
         });
@@ -118,12 +122,15 @@ export const useTicTacToeSocket = (
     const onBeforeUnload = () => {
       if (skipLeaveRef.current) return;
       try {
-        // `keepalive` + `credentials: include` maksymalizuje szansę wysłania requesta podczas zamykania karty.
+        // wysyłamy bez ciasteczek ale z JWT Bearer
+        const token = localStorage.getItem("jwtToken");
         fetch(leaveUrl, {
           method: "POST",
           keepalive: true,
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
           body: "",
         }).catch(() => undefined);
       } catch {
@@ -141,10 +148,13 @@ export const useTicTacToeSocket = (
       const leaveUrl = `${import.meta.env.VITE_API_ADDRESS}/game/leave?gameId=${encodeURIComponent(
         gameId
       )}`;
+      const token = localStorage.getItem("jwtToken");
       fetch(leaveUrl, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: "",
       }).catch(() => undefined);
     }

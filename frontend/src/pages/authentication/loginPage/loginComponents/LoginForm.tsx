@@ -1,26 +1,37 @@
-import { useState, type ChangeEvent } from "react";
+import { useState } from "react";
 import api from "../../../../api/axios";
 import { InputField } from "../../../../components/InputField";
 import { Button } from "../../../../components/Button";
 import { useAppDispatch } from "../../../../app/hooks";
 import { setCredentials } from "../../../../features/auth/authSlice";
 import { type User } from "../../../../types/user";
+import { useNavigate } from "react-router-dom";
 export const LoginForm = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [rememberMe, setRememberMe] = useState<boolean>(false);
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
-  const handleLogin = async (e: ChangeEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const { data } = await api.post<User>("/auth/login", {
-        variables: { nickname: email, password: password },
+      const response = await api.post<User>("/auth/login", {
+        email: email, 
+        password: password,
       });
 
-      dispatch(setCredentials(data));
-    } catch (error) {
-      console.error("Błąd logowania:", error);
+      const token = response.data.token;
+      console.log("[Login] Wyodrębniony token JWT z Body: ", token);
+
+      dispatch(setCredentials({ user: response.data, token }));
+      navigate("/");
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        console.error("Błąd logowania:", error);
+      }
     }
   };
 

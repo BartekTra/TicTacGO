@@ -16,21 +16,19 @@ public class GameRules {
             {2, 4, 6},
     };
 
-    public boolean hasWon(String[] board, String symbol) {
+    public boolean hasWon(String board, String symbol) {
+        char sym = symbol.charAt(0);
         for (int[] line : WIN_CONDITIONS) {
-            if (symbol.equals(board[line[0]])
-                    && symbol.equals(board[line[1]])
-                    && symbol.equals(board[line[2]])) {
+            if (board.charAt(line[0]) == sym
+                    && board.charAt(line[1]) == sym
+                    && board.charAt(line[2]) == sym) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean isBoardFull(String[] board) {
-        for (String cell : board) {
-            if (cell == null) return false;
-        }
-        return true;
+    public boolean isBoardFull(String board) {
+        return board.indexOf('-') == -1;
     }
 }

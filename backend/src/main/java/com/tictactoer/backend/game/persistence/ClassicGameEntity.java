@@ -15,15 +15,5 @@ public class ClassicGameEntity extends GameEntity {
     public ClassicGameEntity(String playerX, String playerO) {
         super(playerX, playerO, GameMode.CLASSIC);
     }
-
-    @Override
-    public void executeMove(String playerSymbol, int position) {
-        if (boardCells[position] != null) {
-            throw new IllegalStateException("To pole jest już zajęte!");
-        }
-
-        boardCells[position] = playerSymbol;
-        notifyBoardChanged();
-    }
 }
 

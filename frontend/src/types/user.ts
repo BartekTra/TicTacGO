@@ -4,4 +4,5 @@ export interface User {
   gamesPlayed: number;
   gamesWon: number;
   winRate: number;
+  token?: string;
 }

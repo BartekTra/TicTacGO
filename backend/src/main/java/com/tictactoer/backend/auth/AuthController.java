@@ -3,10 +3,11 @@ package com.tictactoer.backend.auth;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -27,16 +28,9 @@ public class AuthController {
     }
 
     private ResponseEntity<AuthResponse> buildCookieAndResponse(AuthResult result) {
-        ResponseCookie jwtCookie = ResponseCookie.from("jwt", result.token())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(24 * 60 * 60)
-                .sameSite("Lax")
-                .build();
-
+        log.info("Authentication successful for email: {}", result.response().email());
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + result.token())
                 .body(result.response());
     }
 }
