@@ -110,7 +110,7 @@ const GamePage: React.FC = () => {
               duration={15}
             >
               <PlayerInfo
-                nickname={gameData.playerX ?? "Nie ma gracza"}
+                nickname={gameData.playerX ?? "Nie ma graczaa"}
                 symbol="X"
               />
             </PlayerTimerWrapper>
