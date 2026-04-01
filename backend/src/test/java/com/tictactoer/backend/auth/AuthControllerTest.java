@@ -25,7 +25,7 @@ class AuthControllerTest {
     private AuthController authController;
 
     private final AuthRequest request = new AuthRequest("player@test.com", "PlayerX", "password123");
-    private final AuthResponse responseDto = new AuthResponse(UUID.randomUUID(), "player@test.com", "PlayerX", 0, 0, 0);
+    private final AuthResponse responseDto = new AuthResponse(UUID.randomUUID(), "player@test.com", "PlayerX", 0, 0, 0, "mock.jwt.token");
     private final AuthResult authResult = new AuthResult("mock.jwt.token", responseDto);
 
     @Test

@@ -3,6 +3,8 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAppDispatch } from "../../app/hooks";
 import { fetchCurrentUser } from "./authSlice";
 
+const PUBLIC_PATHS = ["/login", "/register"];
+
 export const AuthInitializer = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -11,13 +13,15 @@ export const AuthInitializer = () => {
 
   useEffect(() => {
     const initAuth = async () => {
+      const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
       try {
         await dispatch(fetchCurrentUser()).unwrap();
-        if (location.pathname === "/login") {
+        console.log("XD?")
+        if (isPublicPath) {
           navigate("/");
         }
       } catch {
-        if (location.pathname !== "/login") {
+        if (!isPublicPath) {
           navigate("/login");
         }
       } finally {
@@ -29,8 +33,11 @@ export const AuthInitializer = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-gray-500 bg-gray-900">
-        Ładowanie sesji...
+      <div className="flex h-screen items-center justify-center bg-gray-900">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+          <p className="text-gray-500 text-sm">Ładowanie sesji…</p>
+        </div>
       </div>
     );
   }

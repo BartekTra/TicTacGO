@@ -8,6 +8,7 @@ export const fetchCurrentUser = createAsyncThunk<User, void, { rejectValue: stri
   async (_, { rejectWithValue }) => {
     try {
       const response = await api.get<User>("/players/me");
+      console.log(response.data);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch user");
